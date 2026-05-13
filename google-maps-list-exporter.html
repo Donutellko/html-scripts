@@ -412,11 +412,15 @@
       return lines.join('\n');
     }
 
+    function nl2br(str) {
+      return str.replace(/\n/g, '<br>');
+    }
+
     function renderHtml({ listName, places }) {
       const items = places.map(p => {
-        const addr = p.address ? ` <span style="color:#555">— ${p.address}</span>` : '';
-        const note = p.note ? `<br><span class="place-note">${p.note}</span>` : '';
-        return `<li><a href="${p.mapsUrl}" target="_blank">${p.name}</a>${addr}${note}</li>`;
+        const addr = p.address ? ` <span style="color:#555">— ${nl2br(p.address)}</span>` : '';
+        const note = p.note ? `<br><span class="place-note">${nl2br(p.note)}</span>` : '';
+        return `<li><a href="${p.mapsUrl}" target="_blank">${nl2br(p.name)}</a>${addr}${note}</li>`;
       }).join('\n');
       return `<h3>${listName}</h3>\n<ul>\n${items}\n</ul>`;
     }
