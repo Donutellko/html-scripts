@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -142,6 +143,16 @@
   <div class="error" id="err"></div>
 
   <script>
+    function resolveMapsUrl(raw) {
+      const url = new URL(raw);
+      // Unwrap google.com/url?q=<actual-url> redirects
+      if (url.hostname === 'www.google.com' && url.pathname === '/url') {
+        const inner = url.searchParams.get('q');
+        if (inner) return new URL(inner);
+      }
+      return url;
+    }
+
     function parse() {
       const raw = document.getElementById('url').value.trim();
       const err = document.getElementById('err');
@@ -150,11 +161,8 @@
       err.textContent = '';
 
       try {
-        const pathname = new URL(raw).pathname;
-        const dirPart = pathname.split('/dir/')[1];
-        if (!dirPart) throw new Error('No waypoints found in URL.');
-
-        const points = dirPart
+        const points = resolveMapsUrl(raw).pathname
+          .split('/dir/')[1]
           .split('/@')[0]
           .split('/')
           .map(p => decodeURIComponent(p.replace(/\+/g, ' ')))
@@ -189,21 +197,10 @@
       };
 
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(done).catch(() => {
-          try {
-            execCopy(text);
-            done();
-          } catch (e) {
-            document.getElementById('err').textContent = 'Error: Unable to copy output.';
-          }
-        });
+        navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
       } else {
-        try {
-          execCopy(text);
-          done();
-        } catch (e) {
-          document.getElementById('err').textContent = 'Error: Unable to copy output.';
-        }
+        execCopy(text);
+        done();
       }
     }
 
