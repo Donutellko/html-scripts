@@ -150,8 +150,11 @@
       err.textContent = '';
 
       try {
-        const points = new URL(raw).pathname
-          .split('/dir/')[1]
+        const pathname = new URL(raw).pathname;
+        const dirPart = pathname.split('/dir/')[1];
+        if (!dirPart) throw new Error('No waypoints found in URL.');
+
+        const points = dirPart
           .split('/@')[0]
           .split('/')
           .map(p => decodeURIComponent(p.replace(/\+/g, ' ')))
@@ -186,10 +189,21 @@
       };
 
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
+        navigator.clipboard.writeText(text).then(done).catch(() => {
+          try {
+            execCopy(text);
+            done();
+          } catch (e) {
+            document.getElementById('err').textContent = 'Error: Unable to copy output.';
+          }
+        });
       } else {
-        execCopy(text);
-        done();
+        try {
+          execCopy(text);
+          done();
+        } catch (e) {
+          document.getElementById('err').textContent = 'Error: Unable to copy output.';
+        }
       }
     }
 
