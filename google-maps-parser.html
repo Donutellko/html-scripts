@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maps Parser</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --surface: #1c1f26;
+      --border: #2e3340;
+      --text: #e4e6ec;
+      --muted: #7a7f8e;
+      --accent: #5c7cfa;
+      --accent-hover: #748ffc;
+      --success: #2f9e44;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 10px 12px;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    #parseBtn {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    #parseBtn:hover { background: var(--accent-hover); }
+
+    #copyBtn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      padding: 10px 20px;
+    }
+
+    #copyBtn:hover { border-color: var(--accent); color: var(--accent); }
+    #copyBtn.copied { background: var(--success); color: #fff; border-color: transparent; }
+
+    .output-wrap {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .output-wrap.visible { display: block; }
+
+    #out {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      padding: 12px;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+      min-height: 60px;
+    }
+
+    .error {
+      color: #fa5252;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Google Maps → Waypoints</h2>
+
+  <textarea id="url" placeholder="Paste a Google Maps directions URL here…"></textarea>
+
+  <div class="actions">
+    <button id="parseBtn" onclick="parse()">Parse</button>
+    <button id="copyBtn" onclick="copy()" style="display:none">Copy</button>
+  </div>
+
+  <div class="output-wrap" id="outputWrap">
+    <textarea id="out" readonly rows="6"></textarea>
+  </div>
+
+  <div class="error" id="err"></div>
+
+  <script>
+    function resolveMapsUrl(raw) {
+      const url = new URL(raw);
+      // Unwrap google.com/url?q=<actual-url> redirects
+      if (url.hostname === 'www.google.com' && url.pathname === '/url') {
+        const inner = url.searchParams.get('q');
+        if (inner) return new URL(inner);
+      }
+      return url;
+    }
+
+    function parse() {
+      const raw = document.getElementById('url').value.trim();
+      const err = document.getElementById('err');
+      const wrap = document.getElementById('outputWrap');
+      const copyBtn = document.getElementById('copyBtn');
+      err.textContent = '';
+
+      try {
+        const points = resolveMapsUrl(raw).pathname
+          .split('/dir/')[1]
+          .split('/@')[0]
+          .split('/')
+          .map(p => decodeURIComponent(p.replace(/\+/g, ' ')))
+          .filter(Boolean);
+
+        if (!points.length) throw new Error('No waypoints found in URL.');
+
+        const markdown = points.map(p => `- ${p}`).join('\n');
+        document.getElementById('out').value = markdown;
+        wrap.classList.add('visible');
+        copyBtn.style.display = '';
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      } catch (e) {
+        wrap.classList.remove('visible');
+        copyBtn.style.display = 'none';
+        err.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    function copy() {
+      const text = document.getElementById('out').value;
+      const btn = document.getElementById('copyBtn');
+
+      const done = () => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
+      } else {
+        execCopy(text);
+        done();
+      }
+    }
+
+    function execCopy(text) {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+
+    // Parse on Ctrl+Enter / Cmd+Enter
+    document.getElementById('url').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) parse();
+    });
+  </script>
+</body>
+</html>

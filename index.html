@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Scripts</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --surface: #1c1f26;
+      --border: #2e3340;
+      --text: #e4e6ec;
+      --muted: #7a7f8e;
+      --accent: #5c7cfa;
+      --accent-hover: #748ffc;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    a {
+      display: inline-block;
+      text-decoration: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    a:hover { background: var(--accent-hover); }
+  </style>
+</head>
+<body>
+  <h1>HTML Scripts</h1>
+  <p>Tools</p>
+  <a href="google-maps-parser.html">Google Maps Parser</a>
+</body>
+</html>
